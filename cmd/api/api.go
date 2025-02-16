@@ -39,6 +39,13 @@ func (app application) RegisterRoutes() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health-check", app.healthCheckHandler)
+
+		r.Route("/posts", func(r chi.Router) {
+			r.Post("/", app.createPostHandler)
+			r.Get("/{postID}", app.getPostHandler)
+			r.Delete("/{postID}", app.deletePostHandler)
+			r.Patch("/{postID}", app.updatePostHandler)
+		})
 	})
 
 	return r

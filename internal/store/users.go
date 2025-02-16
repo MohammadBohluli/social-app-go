@@ -11,16 +11,16 @@ type User struct {
 	ID        types.ID `json:"id"`
 	Username  string   `json:"username"`
 	Email     string   `json:"email"`
-	Password  types.ID `json:"-"`
+	Password  string   `json:"-"`
 	CreatedAt string   `json:"created_at"`
 	UpdatedAt string   `json:"updated_at"`
 }
 
-type UsersStore struct {
+type UserStore struct {
 	db *sql.DB
 }
 
-func (u UsersStore) Create(ctx context.Context, user User) error {
+func (u UserStore) Create(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (username, password, email)
 		VALUES ($1, $2, $3)
@@ -29,7 +29,7 @@ func (u UsersStore) Create(ctx context.Context, user User) error {
 
 	err := u.db.
 		QueryRowContext(ctx, query, user.Username, user.Password, user.Email).
-		Scan(user.ID, user.CreatedAt, user.UpdatedAt)
+		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return err
 	}
