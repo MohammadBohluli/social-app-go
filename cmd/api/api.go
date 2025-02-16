@@ -46,6 +46,10 @@ func (app application) RegisterRoutes() http.Handler {
 			r.Delete("/{postID}", app.deletePostHandler)
 			r.Patch("/{postID}", app.updatePostHandler)
 		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/{userID}", app.getUserHandler)
+		})
 	})
 
 	return r
