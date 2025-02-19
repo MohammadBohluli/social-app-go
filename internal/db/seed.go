@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+
 	"log"
 	"math/rand/v2"
 
@@ -111,7 +112,7 @@ func Seed(s store.Storage) {
 
 	posts := generatePosts(20, users)
 	for _, post := range posts {
-		fmt.Printf("%+v", post)
+
 		if err := s.Posts.Create(ctx, post); err != nil {
 			log.Println("❌Error creating post seed: ", err)
 			return

@@ -20,3 +20,8 @@ func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("❌Not found error: %s path: %s error: %s", r.Method, r.URL.Path, err)
 	WriteJsonError(w, http.StatusNotFound, "Not found")
 }
+
+func ConflictErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("❌conflict error: %s path: %s error: %s", r.Method, r.URL.Path, err)
+	WriteJsonError(w, http.StatusConflict, err.Error())
+}

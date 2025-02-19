@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrorNotFound = errors.New("Resource not found")
+	ErrorNotFound = errors.New("resource not found")
+	ErrorConflict = errors.New("resource already exists")
 )
 
 type Storage struct {
@@ -28,12 +29,18 @@ type Storage struct {
 		Create(context.Context, *User) error
 		GetByID(context.Context, types.ID) (*User, error)
 	}
+
+	Followers interface {
+		Follow(ctx context.Context, followerID, userID types.ID) error
+		UnFollow(ctx context.Context, followerID, userID types.ID) error
+	}
 }
 
 func NewPostgresStorage(db *sql.DB) Storage {
 	return Storage{
-		Posts:    PostStore{db},
-		Users:    UserStore{db},
-		Comments: CommentStore{db},
+		Posts:     PostStore{db},
+		Users:     UserStore{db},
+		Comments:  CommentStore{db},
+		Followers: FollowerStore{db},
 	}
 }
