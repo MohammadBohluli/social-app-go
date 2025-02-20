@@ -31,7 +31,7 @@ func main() {
 	// http://localhost:8000/v1/swagger/index.html
 	cfg := config{
 		addr:   ":8000",
-		apiUrl: "localhost:8080",
+		apiUrl: "localhost:8000",
 		db: dbConfig{
 			addr:         "postgres://myusername:mypassword1234@localhost/social?sslmode=disable",
 			maxOpenConns: 30,

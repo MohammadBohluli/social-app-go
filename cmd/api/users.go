@@ -21,6 +21,17 @@ type FollowUserRequest struct {
 	UserID types.ID `json:"user_id"`
 }
 
+// GetUser godoc
+//
+//	@Summary		Fetches a user profile
+//	@Description	Fetches a user profile by ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userID	path		int	true	"User ID"
+//	@Success		200		{object}	store.User
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID} [get]
 func (app application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := getUserFromContext(r)
@@ -31,6 +42,17 @@ func (app application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FollowUser godoc
+//
+//	@Summary		Follows a user
+//	@Description	Follows a user by ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userID	path		int		true	"User ID"
+//	@Success		204		{string}	string	"User followed"
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID}/follow [put]
 func (app application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	followerUser := getUserFromContext(r)
 
