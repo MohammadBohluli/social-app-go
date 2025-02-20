@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/MohammadBohluli/social-app-go/docs"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type application struct {
@@ -24,8 +27,9 @@ type dbConfig struct {
 }
 
 type config struct {
-	addr string
-	db   dbConfig
+	addr   string
+	db     dbConfig
+	apiUrl string
 }
 
 func (app application) RegisterRoutes() http.Handler {
@@ -39,6 +43,10 @@ func (app application) RegisterRoutes() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health-check", app.healthCheckHandler)
+
+		// swagger
+		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsUrl)))
 
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
@@ -67,6 +75,11 @@ func (app application) RegisterRoutes() http.Handler {
 }
 
 func (app *application) start(mux http.Handler) error {
+
+	// documents swagger
+	docs.SwaggerInfo.Version = version
+	docs.SwaggerInfo.Host = app.config.apiUrl
+	docs.SwaggerInfo.BasePath = "/v1"
 
 	server := http.Server{
 		Addr:         app.config.addr,
