@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/MohammadBohluli/social-app-go/internal/db"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"go.uber.org/zap"
@@ -37,6 +39,7 @@ func main() {
 			maxIdleConns: 30,
 			maxIdleTime:  "15m",
 		},
+		mail: mailConfig{exp: time.Hour * 23 * 3}, // 3 day
 	}
 
 	// logger

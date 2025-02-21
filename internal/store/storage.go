@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/MohammadBohluli/social-app-go/pkg"
 	"github.com/MohammadBohluli/social-app-go/types"
@@ -28,8 +29,10 @@ type Storage struct {
 	}
 
 	Users interface {
-		Create(context.Context, *User) error
+		Create(context.Context, *sql.Tx, *User) error
+		Activate(context.Context, string) error
 		GetByID(context.Context, types.ID) (*User, error)
+		CreateAndInvite(ctx context.Context, user *User, token string, exp time.Duration) error
 	}
 
 	Followers interface {
@@ -45,4 +48,18 @@ func NewPostgresStorage(db *sql.DB) Storage {
 		Comments:  CommentStore{db},
 		Followers: FollowerStore{db},
 	}
+}
+
+func withTX(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }

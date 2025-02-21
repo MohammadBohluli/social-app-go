@@ -26,10 +26,15 @@ type dbConfig struct {
 	maxIdleTime  string
 }
 
+type mailConfig struct {
+	exp time.Duration
+}
+
 type config struct {
 	addr   string
 	db     dbConfig
 	apiUrl string
+	mail   mailConfig
 }
 
 func (app application) RegisterRoutes() http.Handler {
@@ -56,6 +61,9 @@ func (app application) RegisterRoutes() http.Handler {
 		})
 
 		r.Route("/users", func(r chi.Router) {
+
+			r.Put("/activate/{token}", app.activateUserHandler)
+
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(app.userContextMiddleware)
 
@@ -68,6 +76,11 @@ func (app application) RegisterRoutes() http.Handler {
 				r.Get("/feed", app.getUserFeedHandler)
 
 			})
+		})
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/user", app.registerUserHandler)
+
 		})
 	})
 

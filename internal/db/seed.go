@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"log"
@@ -99,16 +100,20 @@ var comments = []string{
 	"This deserves more attention! Well done.",
 }
 
-func Seed(s store.Storage) {
+func Seed(s store.Storage, db *sql.DB) {
 	ctx := context.Background()
+	tx, _ := db.BeginTx(ctx, nil)
 
 	users := generateUsers(10)
 	for _, user := range users {
-		if err := s.Users.Create(ctx, user); err != nil {
+		if err := s.Users.Create(ctx, tx, user); err != nil {
+			_ = tx.Rollback()
 			log.Println("❌Error creating user seed: ", err)
 			return
 		}
 	}
+
+	tx.Commit()
 
 	posts := generatePosts(20, users)
 	for _, post := range posts {

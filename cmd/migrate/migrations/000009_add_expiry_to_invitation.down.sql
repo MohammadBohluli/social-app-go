@@ -1,0 +1,1 @@
+ALTER Table user_invitations DROP COLUMN expiry;
