@@ -79,6 +79,17 @@ func (app application) followUserHandler(w http.ResponseWriter, r *http.Request)
 
 }
 
+// unfollowUser godoc
+//
+//	@Summary		unfollows a user
+//	@Description	unfollows a user by ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userID	path		int		true	"User ID"
+//	@Success		204		{string}	string	"User unfollowed"
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID}/unfollow [put]
 func (app application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	unfollowedUser := getUserFromContext(r)
 

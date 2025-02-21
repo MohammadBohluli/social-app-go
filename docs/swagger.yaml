@@ -88,6 +88,29 @@ paths:
       summary: Follows a user
       tags:
       - users
+  /users/{userID}/unfollow:
+    put:
+      consumes:
+      - application/json
+      description: unfollows a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User unfollowed
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: unfollows a user
+      tags:
+      - users
 securityDefinitions:
   ApiKeyAuth:
     in: header

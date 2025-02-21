@@ -1,10 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"github.com/MohammadBohluli/social-app-go/internal/db"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
+	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
@@ -40,21 +39,26 @@ func main() {
 		},
 	}
 
+	// logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
 	db, err := db.NewDB(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	defer db.Close()
-	log.Println("✅ Database is Connected")
+	logger.Info("✅ Database is Connected")
 
 	store := store.NewPostgresStorage(db)
 	app := application{
 		config: cfg,
 		store:  store,
+		logger: logger,
 	}
 
 	mux := app.RegisterRoutes()
 
-	log.Fatal(app.start(mux))
+	logger.Fatal(app.start(mux))
 }
