@@ -28,6 +28,14 @@ type dbConfig struct {
 	maxIdleTime  string
 }
 
+type authConfig struct {
+	basic basicConfig
+}
+
+type basicConfig struct {
+	username string
+	password string
+}
 type mailConfig struct {
 	exp       time.Duration
 	sendGrid  sendGridConfig
@@ -44,6 +52,7 @@ type config struct {
 	mail        mailConfig
 	frontEndURL string
 	evn         string
+	auth        authConfig
 }
 
 func (app application) RegisterRoutes() http.Handler {
@@ -56,7 +65,8 @@ func (app application) RegisterRoutes() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health-check", app.healthCheckHandler)
+
+		r.With(app.BasicAuthMiddleware()).Get("/health-check", app.healthCheckHandler)
 
 		// swagger
 		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)

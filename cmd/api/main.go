@@ -36,6 +36,12 @@ func main() {
 		apiUrl:      "localhost:8000",
 		frontEndURL: "http://localhost:4000",
 		evn:         "development",
+		auth: authConfig{
+			basic: basicConfig{
+				username: "admin",
+				password: "admin",
+			},
+		},
 		db: dbConfig{
 			addr:         "postgres://myusername:mypassword1234@localhost/social?sslmode=disable",
 			maxOpenConns: 30,

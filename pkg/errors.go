@@ -25,3 +25,14 @@ func ConflictErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("❌conflict error: %s path: %s error: %s", r.Method, r.URL.Path, err)
 	WriteJsonError(w, http.StatusConflict, err.Error())
 }
+
+func UnAuthorizedErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err)
+	WriteJsonError(w, http.StatusUnauthorized, "unauthorized")
+}
+
+func UnAuthorizedBasicErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("unauthorized basic error: %s path: %s error: %s", r.Method, r.URL.Path, err)
+	w.Header().Set("WWW-Authenticate", `Basic realm="restricted, charset="UTF-8"`)
+	WriteJsonError(w, http.StatusUnauthorized, "unauthorized basic")
+}
