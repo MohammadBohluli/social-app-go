@@ -123,7 +123,7 @@ func (s UserStore) Activate(ctx context.Context, token string) error {
 		}
 
 		if err := s.deleteUserInvitations(ctx, tx, user.ID); err != nil {
-
+			return err
 		}
 		return nil
 	})
@@ -165,6 +165,32 @@ func (s *UserStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
 
 func (s *UserStore) deleteUserInvitations(ctx context.Context, tx *sql.Tx, userID types.ID) error {
 	query := "DELETE FROM user_invitations WHERE user_id = $1"
+
+	_, err := tx.ExecContext(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s UserStore) Delete(ctx context.Context, userID types.ID) error {
+	return withTX(s.db, ctx, func(tx *sql.Tx) error {
+
+		if err := s.delete(ctx, tx, userID); err != nil {
+			return err
+		}
+
+		if err := s.deleteUserInvitations(ctx, tx, userID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *UserStore) delete(ctx context.Context, tx *sql.Tx, userID types.ID) error {
+	query := "DELETE FROM users WHERE id = $1"
 
 	_, err := tx.ExecContext(ctx, query, userID)
 	if err != nil {

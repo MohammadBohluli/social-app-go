@@ -32,6 +32,7 @@ type Storage struct {
 		Create(context.Context, *sql.Tx, *User) error
 		Activate(context.Context, string) error
 		GetByID(context.Context, types.ID) (*User, error)
+		Delete(context.Context, types.ID) error
 		CreateAndInvite(ctx context.Context, user *User, token string, exp time.Duration) error
 	}
 

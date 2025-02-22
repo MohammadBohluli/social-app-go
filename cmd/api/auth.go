@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
+	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/MohammadBohluli/social-app-go/pkg"
 	"github.com/google/uuid"
@@ -57,17 +59,16 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	err = app.store.Users.CreateAndInvite(ctx, &user, hashToken, app.config.mail.exp)
 	if err != nil {
-		if err != nil {
-			switch err {
-			case store.ErrDuplicateEmail:
-				pkg.BadRequestError(w, r, err)
-			case store.ErrDuplicateUsername:
-				pkg.BadRequestError(w, r, err)
-			default:
-				pkg.InternalServerError(w, r, err)
-			}
-			return
+
+		switch err {
+		case store.ErrDuplicateEmail:
+			pkg.BadRequestError(w, r, err)
+		case store.ErrDuplicateUsername:
+			pkg.BadRequestError(w, r, err)
+		default:
+			pkg.InternalServerError(w, r, err)
 		}
+		return
 
 	}
 
@@ -75,6 +76,33 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		User:  &user,
 		Token: palinToken,
 	}
+
+	activationURL := fmt.Sprintf("%s/confirm/%s", app.config.frontEndURL, hashToken)
+	vars := struct {
+		Username      string
+		ActivationURL string
+	}{
+		Username:      user.Username,
+		ActivationURL: activationURL,
+	}
+
+	isProdEnv := app.config.evn == "development"
+	status, err := app.mailer.Send(mailer.UserWellcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
+
+	if err != nil {
+		app.logger.Errorw("error sending wellcome email", "error", err)
+
+		// roleback user creation if email fails(SAGA pattern)
+		if err := app.store.Users.Delete(ctx, user.ID); err != nil {
+			app.logger.Errorw("error sending wellcome email", "error", err)
+
+		}
+
+		pkg.InternalServerError(w, r, err)
+		return
+	}
+
+	app.logger.Infow("Email sent", "status code", status)
 
 	if err := pkg.JsonResponse(w, http.StatusCreated, u); err != nil {
 		pkg.InternalServerError(w, r, err)

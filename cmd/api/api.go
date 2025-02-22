@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MohammadBohluli/social-app-go/docs"
+	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,6 +18,7 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type dbConfig struct {
@@ -27,14 +29,21 @@ type dbConfig struct {
 }
 
 type mailConfig struct {
-	exp time.Duration
+	exp       time.Duration
+	sendGrid  sendGridConfig
+	fromEmail string
 }
 
+type sendGridConfig struct {
+	apiKey string
+}
 type config struct {
-	addr   string
-	db     dbConfig
-	apiUrl string
-	mail   mailConfig
+	addr        string
+	db          dbConfig
+	apiUrl      string
+	mail        mailConfig
+	frontEndURL string
+	evn         string
 }
 
 func (app application) RegisterRoutes() http.Handler {

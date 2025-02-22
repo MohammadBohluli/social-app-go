@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/MohammadBohluli/social-app-go/internal/db"
+	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"go.uber.org/zap"
 )
@@ -31,15 +32,24 @@ const version = "0.0.1"
 func main() {
 	// http://localhost:8000/v1/swagger/index.html
 	cfg := config{
-		addr:   ":8000",
-		apiUrl: "localhost:8000",
+		addr:        ":8000",
+		apiUrl:      "localhost:8000",
+		frontEndURL: "http://localhost:4000",
+		evn:         "development",
 		db: dbConfig{
 			addr:         "postgres://myusername:mypassword1234@localhost/social?sslmode=disable",
 			maxOpenConns: 30,
 			maxIdleConns: 30,
 			maxIdleTime:  "15m",
 		},
-		mail: mailConfig{exp: time.Hour * 23 * 3}, // 3 day
+		mail: mailConfig{
+			exp:       time.Hour * 23 * 3,
+			fromEmail: "GopherSocial",
+			sendGrid: sendGridConfig{
+				apiKey: "API_KEY",
+			},
+		}, // 3 day
+
 	}
 
 	// logger
@@ -55,10 +65,13 @@ func main() {
 	logger.Info("✅ Database is Connected")
 
 	store := store.NewPostgresStorage(db)
+
+	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	app := application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: mailer,
 	}
 
 	mux := app.RegisterRoutes()
