@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MohammadBohluli/social-app-go/docs"
+	"github.com/MohammadBohluli/social-app-go/internal/auth"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -15,10 +16,11 @@ import (
 )
 
 type application struct {
-	config config
-	store  store.Storage
-	logger *zap.SugaredLogger
-	mailer mailer.Client
+	config        config
+	store         store.Storage
+	logger        *zap.SugaredLogger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type dbConfig struct {
@@ -30,6 +32,12 @@ type dbConfig struct {
 
 type authConfig struct {
 	basic basicConfig
+	token tokenConfig
+}
+
+type tokenConfig struct {
+	secret string
+	exp    time.Duration
 }
 
 type basicConfig struct {
@@ -99,6 +107,7 @@ func (app application) RegisterRoutes() http.Handler {
 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 
 		})
 	})

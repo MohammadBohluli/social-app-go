@@ -5,10 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/MohammadBohluli/social-app-go/pkg"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -21,6 +23,11 @@ type RegisterUserRequest struct {
 type UserWithActivateToken struct {
 	*store.User
 	Token string `json:"token"`
+}
+
+type CreateUserTokenPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // registerUserHandler godoc
@@ -105,6 +112,57 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	app.logger.Infow("Email sent", "status code", status)
 
 	if err := pkg.JsonResponse(w, http.StatusCreated, u); err != nil {
+		pkg.InternalServerError(w, r, err)
+		return
+	}
+}
+
+// createTokenHandler godoc
+
+// @Summary		Creates a token
+// @Description	Creates a token for a user
+// @Tags			authentication
+// @Accept			json
+// @Produce		json
+// @Param			payload	body		CreateUserTokenPayload	true	"User credentials"
+// @Success		200		{string}	string					"Token"
+// @Router			/auth/token [post]
+func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
+
+	// parse payload credential
+	var payload CreateUserTokenPayload
+	if err := pkg.ReadJson(w, r, &payload); err != nil {
+		pkg.BadRequestError(w, r, err)
+		return
+	}
+	// fetch the user(check if suer exist) from the payload
+	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
+	if err != nil {
+		switch err {
+		case store.ErrorNotFound:
+			pkg.UnAuthorizedBasicErrorResponse(w, r, err)
+		default:
+			pkg.InternalServerError(w, r, err)
+		}
+		return
+	}
+	// generate the token -> add claims
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"iss": "gopherSocial",
+	}
+
+	token, err := app.authenticator.GenerateToken(claims)
+	if err != nil {
+		pkg.InternalServerError(w, r, err)
+		return
+	}
+	// send it to the client
+
+	if err := pkg.JsonResponse(w, http.StatusCreated, token); err != nil {
 		pkg.InternalServerError(w, r, err)
 		return
 	}

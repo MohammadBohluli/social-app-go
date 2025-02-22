@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/MohammadBohluli/social-app-go/internal/auth"
 	"github.com/MohammadBohluli/social-app-go/internal/db"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
@@ -41,6 +42,10 @@ func main() {
 				username: "admin",
 				password: "admin",
 			},
+			token: tokenConfig{
+				secret: "my_token",
+				exp:    time.Hour * 24 * 3, //3day
+			},
 		},
 		db: dbConfig{
 			addr:         "postgres://myusername:mypassword1234@localhost/social?sslmode=disable",
@@ -73,11 +78,14 @@ func main() {
 	store := store.NewPostgresStorage(db)
 
 	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
+
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, "gopherSocial", "gopherSocial")
 	app := application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailer,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailer,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.RegisterRoutes()

@@ -1,5 +1,12 @@
 basePath: /v1
 definitions:
+  main.CreateUserTokenPayload:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
   main.RegisterUserRequest:
     properties:
       email:
@@ -53,6 +60,28 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Gopher Social API
 paths:
+  /auth/token:
+    post:
+      consumes:
+      - application/json
+      description: Creates a token for a user
+      parameters:
+      - description: User credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateUserTokenPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token
+          schema:
+            type: string
+      summary: Creates a token
+      tags:
+      - authentication
   /auth/user:
     post:
       consumes:
