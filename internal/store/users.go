@@ -217,5 +217,6 @@ func (s UserStore) GetByEmail(ctx context.Context, email string) (*User, error) 
 			return nil, err
 		}
 	}
+
 	return user, nil
 }

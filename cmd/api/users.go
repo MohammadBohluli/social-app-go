@@ -85,16 +85,14 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Router			/users/{userID}/follow [put]
 func (app application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	followerUser := getUserFromContext(r)
-
-	//TODO: Revert back to auth userID from ctx(this is authenticated user)
-	var payload FollowUserRequest
-	if err := pkg.ReadJson(w, r, &payload); err != nil {
+	followedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		pkg.BadRequestError(w, r, err)
 		return
 	}
 
 	ctx := r.Context()
-	if err := app.store.Followers.Follow(ctx, followerUser.ID, payload.UserID); err != nil {
+	if err := app.store.Followers.Follow(ctx, followerUser.ID, types.ID(followedID)); err != nil {
 
 		switch err {
 		case store.ErrorConflict:
@@ -121,17 +119,16 @@ func (app application) followUserHandler(w http.ResponseWriter, r *http.Request)
 //	@Security		ApiKeyAuth
 //	@Router			/users/{userID}/unfollow [put]
 func (app application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
-	unfollowedUser := getUserFromContext(r)
 
-	//TODO: Revert back to auth userID from ctx(this is authenticated user)
-	var payload FollowUserRequest
-	if err := pkg.ReadJson(w, r, &payload); err != nil {
+	followerUser := getUserFromContext(r)
+	unfollowedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		pkg.BadRequestError(w, r, err)
 		return
 	}
 
 	ctx := r.Context()
-	if err := app.store.Followers.UnFollow(ctx, unfollowedUser.ID, payload.UserID); err != nil {
+	if err := app.store.Followers.UnFollow(ctx, followerUser.ID, types.ID(unfollowedID)); err != nil {
 		pkg.InternalServerError(w, r, err)
 		return
 	}

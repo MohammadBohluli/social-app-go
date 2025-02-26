@@ -74,17 +74,21 @@ func (app application) RegisterRoutes() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 
-		r.With(app.BasicAuthMiddleware()).Get("/health-check", app.healthCheckHandler)
+		r.Get("/health-check", app.healthCheckHandler)
 
 		// swagger
 		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsUrl)))
 
 		r.Route("/posts", func(r chi.Router) {
+			r.Use(app.AuthTokenMiddleware)
 			r.Post("/", app.createPostHandler)
-			r.Get("/{postID}", app.getPostHandler)
-			r.Delete("/{postID}", app.deletePostHandler)
-			r.Patch("/{postID}", app.updatePostHandler)
+
+			r.Route("/{postID}", func(r chi.Router) {
+				r.Get("/", app.getPostHandler)
+				r.Delete("/", app.deletePostHandler)
+				r.Patch("/", app.updatePostHandler)
+			})
 		})
 
 		r.Route("/users", func(r chi.Router) {
@@ -92,7 +96,7 @@ func (app application) RegisterRoutes() http.Handler {
 			r.Put("/activate/{token}", app.activateUserHandler)
 
 			r.Route("/{userID}", func(r chi.Router) {
-				r.Use(app.userContextMiddleware)
+				r.Use(app.AuthTokenMiddleware)
 
 				r.Get("/", app.getUserHandler)
 				r.Put("/follow", app.followUserHandler)
@@ -100,6 +104,7 @@ func (app application) RegisterRoutes() http.Handler {
 			})
 
 			r.Group(func(r chi.Router) {
+				r.Use(app.AuthTokenMiddleware)
 				r.Get("/feed", app.getUserFeedHandler)
 
 			})

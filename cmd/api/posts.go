@@ -29,11 +29,11 @@ func (app application) createPostHandler(w http.ResponseWriter, r *http.Request)
 		pkg.BadRequestError(w, r, err)
 		return
 	}
-	// fake data
-	userID := 1
+
+	user := getUserFromContext(r)
 
 	post := store.Post{
-		UserID:  types.ID(userID),
+		UserID:  user.ID,
 		Title:   postReq.Title,
 		Content: postReq.Content,
 		Tags:    postReq.Tags,

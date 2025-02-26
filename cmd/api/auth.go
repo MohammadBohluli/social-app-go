@@ -136,6 +136,7 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// fetch the user(check if suer exist) from the payload
+
 	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
