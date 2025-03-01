@@ -86,6 +86,17 @@ func (app application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdatePost godoc
+// @Summary Updates a post
+// @Description Updates a post by ID
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID"
+// @Param payload body UpdatePostPayload true "Post payload"
+// @Success 200 {object} store.Post
+// @Security ApiKeyAuth
+// @Router /posts/{id} [patch]
 func (app application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	var postReq UpdatePostRequest

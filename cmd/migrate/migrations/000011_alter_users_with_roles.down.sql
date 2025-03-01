@@ -1,0 +1,1 @@
+ALTER TABLE IF NOT EXISTS users DROP COLUMN "role_id";

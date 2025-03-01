@@ -86,8 +86,8 @@ func (app application) RegisterRoutes() http.Handler {
 
 			r.Route("/{postID}", func(r chi.Router) {
 				r.Get("/", app.getPostHandler)
-				r.Delete("/", app.deletePostHandler)
-				r.Patch("/", app.updatePostHandler)
+				r.Delete("/", app.checkPostOwnerShip("admin", app.deletePostHandler))
+				r.Patch("/", app.checkPostOwnerShip("moderator", app.updatePostHandler))
 			})
 		})
 

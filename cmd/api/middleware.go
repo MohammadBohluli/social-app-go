@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/MohammadBohluli/social-app-go/pkg"
 	"github.com/MohammadBohluli/social-app-go/types"
 	"github.com/golang-jwt/jwt/v5"
@@ -53,6 +54,41 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 	})
+}
+
+func (app *application) checkPostOwnerShip(role string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := getUserFromContext(r)
+		post := 1 //getPostFromContext(r)
+
+		if post == int(user.ID) {
+			next.ServeHTTP(w, r)
+			return
+
+		}
+
+		allowed, err := app.checkRolePrecedence(r.Context(), user, role)
+		if err != nil {
+			pkg.InternalServerError(w, r, err)
+			return
+		}
+
+		if !allowed {
+			pkg.ForbiddenErrorResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app application) checkRolePrecedence(ctx context.Context, user *store.User, roleName string) (bool, error) {
+	role, err := app.store.Roles.GetByName(ctx, roleName)
+	if err != nil {
+		return false, err
+	}
+
+	return types.ID(user.Role.Level) >= types.ID(role.Level), nil
 }
 
 // func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {

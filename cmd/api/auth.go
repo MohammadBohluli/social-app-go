@@ -57,6 +57,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Username: payload.Username,
 		Email:    payload.Email,
 		Password: hashPassword,
+		Role: store.Role{
+			Name: "user",
+		},
 	}
 
 	palinToken := uuid.New().String()

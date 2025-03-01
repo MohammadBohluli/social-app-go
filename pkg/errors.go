@@ -11,6 +11,12 @@ func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	WriteJsonError(w, http.StatusInternalServerError, "the server encountered a problem")
 }
 
+func ForbiddenErrorResponse(w http.ResponseWriter, r *http.Request) {
+	// must be inject logger
+	log.Printf("❌forbidden error: %s path: %s error: %s", r.Method, r.URL.Path, "error")
+	WriteJsonError(w, http.StatusForbidden, "forbidden")
+}
+
 func BadRequestError(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("❌Bad request error: %s path: %s error: %s", r.Method, r.URL.Path, err)
 	WriteJsonError(w, http.StatusBadRequest, err.Error())
