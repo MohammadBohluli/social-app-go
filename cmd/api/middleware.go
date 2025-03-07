@@ -43,7 +43,7 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
-		user, err := app.store.Users.GetByID(ctx, types.ID(userID))
+		user, err := app.getUser(ctx, types.ID(userID))
 		if err != nil {
 			pkg.UnAuthorizedErrorResponse(w, r, err)
 			return
@@ -89,6 +89,27 @@ func (app application) checkRolePrecedence(ctx context.Context, user *store.User
 	}
 
 	return types.ID(user.Role.Level) >= types.ID(role.Level), nil
+}
+
+func (app application) getUser(ctx context.Context, userID types.ID) (*store.User, error) {
+	user, err := app.cacheStorage.Users.Get(ctx, types.ID(userID))
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		user, err := app.store.Users.GetByID(ctx, types.ID(userID))
+		if err != nil {
+			return nil, err
+		}
+
+		if err := app.cacheStorage.Users.Set(ctx, user); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return user, nil
 }
 
 // func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {

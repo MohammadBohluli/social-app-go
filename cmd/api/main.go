@@ -7,6 +7,7 @@ import (
 	"github.com/MohammadBohluli/social-app-go/internal/db"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
+	"github.com/MohammadBohluli/social-app-go/internal/store/cache"
 	"go.uber.org/zap"
 )
 
@@ -37,6 +38,13 @@ func main() {
 		apiUrl:      "localhost:8000",
 		frontEndURL: "http://localhost:4000",
 		evn:         "development",
+		redisCfg: redisConfig{
+			host:     "localhost",
+			port:     6379,
+			password: "",
+			db:       0,
+			enabled:  false,
+		},
 		auth: authConfig{
 			basic: basicConfig{
 				username: "admin",
@@ -75,6 +83,8 @@ func main() {
 	defer db.Close()
 	logger.Info("✅ Database is Connected")
 
+	rdb := cache.New(cfg.redisCfg.host, cfg.redisCfg.port, cfg.redisCfg.password, cfg.redisCfg.db)
+
 	store := store.NewPostgresStorage(db)
 
 	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
@@ -82,6 +92,7 @@ func main() {
 	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, "gopherSocial", "gopherSocial")
 	app := application{
 		config:        cfg,
+		cacheStorage:  cache.NewRedisStorage(rdb),
 		store:         store,
 		logger:        logger,
 		mailer:        mailer,

@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/MohammadBohluli/social-app-go/docs"
 	"github.com/MohammadBohluli/social-app-go/internal/auth"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
+	"github.com/MohammadBohluli/social-app-go/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -21,8 +26,16 @@ type application struct {
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	cacheStorage  cache.Storage
 }
 
+type redisConfig struct {
+	host     string
+	port     int
+	password string
+	db       int
+	enabled  bool
+}
 type dbConfig struct {
 	addr         string
 	maxOpenConns int
@@ -61,6 +74,7 @@ type config struct {
 	frontEndURL string
 	evn         string
 	auth        authConfig
+	redisCfg    redisConfig
 }
 
 func (app application) RegisterRoutes() http.Handler {
@@ -134,6 +148,20 @@ func (app *application) start(mux http.Handler) error {
 		ReadTimeout:  10 * time.Second,
 		IdleTimeout:  time.Minute,
 	}
+
+	shutdown := make(chan error)
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s := <-quit
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		app.logger.Infow("signal caught", "signal", s.String())
+
+		shutdown <- server.Shutdown(ctx)
+	}()
 
 	app.logger.Infof("✅ Starting server on http://localhost%s", server.Addr)
 

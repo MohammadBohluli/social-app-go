@@ -34,11 +34,28 @@ type FollowUserRequest struct {
 //	@Router			/users/{userID} [get]
 func (app application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 
-	user := getUserFromContext(r)
+	userID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
+		pkg.BadRequestError(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	user, err := app.getUser(ctx, types.ID(userID))
+	if err != nil {
+		switch err {
+		case store.ErrorNotFound:
+			pkg.NotFoundError(w, r, err)
+			return
+		default:
+			pkg.InternalServerError(w, r, err)
+			return
+		}
+	}
 
 	if err := pkg.JsonResponse(w, http.StatusOK, user); err != nil {
 		pkg.InternalServerError(w, r, err)
-		return
 	}
 }
 
