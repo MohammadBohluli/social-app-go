@@ -112,6 +112,18 @@ func (app application) getUser(ctx context.Context, userID types.ID) (*store.Use
 	return user, nil
 }
 
+func (app *application) RateLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if app.config.rateLimiter.Enabled {
+			if allow, retryAfter := app.rateLimiter.Allow(r.RemoteAddr); !allow {
+				pkg.RateLimitExceededErrorResponse(w, r, retryAfter.String())
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 // 	return func(next http.Handler) http.Handler {
 // 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -12,6 +12,7 @@ import (
 	"github.com/MohammadBohluli/social-app-go/docs"
 	"github.com/MohammadBohluli/social-app-go/internal/auth"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
+	"github.com/MohammadBohluli/social-app-go/internal/ratelimiter"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/MohammadBohluli/social-app-go/internal/store/cache"
 	"github.com/go-chi/chi/v5"
@@ -27,6 +28,7 @@ type application struct {
 	mailer        mailer.Client
 	authenticator auth.Authenticator
 	cacheStorage  cache.Storage
+	rateLimiter   ratelimiter.Limiter
 }
 
 type redisConfig struct {
@@ -75,6 +77,7 @@ type config struct {
 	evn         string
 	auth        authConfig
 	redisCfg    redisConfig
+	rateLimiter ratelimiter.Config
 }
 
 func (app application) RegisterRoutes() http.Handler {
@@ -83,6 +86,7 @@ func (app application) RegisterRoutes() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 
 	r.Use(middleware.Timeout(60 * time.Second))
 

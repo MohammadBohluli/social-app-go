@@ -6,6 +6,7 @@ import (
 	"github.com/MohammadBohluli/social-app-go/internal/auth"
 	"github.com/MohammadBohluli/social-app-go/internal/db"
 	"github.com/MohammadBohluli/social-app-go/internal/mailer"
+	"github.com/MohammadBohluli/social-app-go/internal/ratelimiter"
 	"github.com/MohammadBohluli/social-app-go/internal/store"
 	"github.com/MohammadBohluli/social-app-go/internal/store/cache"
 	"go.uber.org/zap"
@@ -68,7 +69,11 @@ func main() {
 				apiKey: "API_KEY",
 			},
 		}, // 3 day
-
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: 20,
+			TimeFrame:            time.Second * 5,
+			Enabled:              true,
+		},
 	}
 
 	// logger
@@ -84,6 +89,12 @@ func main() {
 	logger.Info("✅ Database is Connected")
 
 	rdb := cache.New(cfg.redisCfg.host, cfg.redisCfg.port, cfg.redisCfg.password, cfg.redisCfg.db)
+	defer rdb.Close()
+
+	ratelimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
 
 	store := store.NewPostgresStorage(db)
 
@@ -97,6 +108,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   ratelimiter,
 	}
 
 	mux := app.RegisterRoutes()
